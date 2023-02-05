@@ -1,0 +1,7 @@
+name: HypeRate
+package: hyperate-gauge
+version: 1.1.0
+description: Hyperate Gauge Watch
+author: Osman Çitçi
+license: MIT
+repository: "https://github.com/osmancitci/hyperate-gauge"
