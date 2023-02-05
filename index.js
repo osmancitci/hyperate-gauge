@@ -5,7 +5,7 @@ const { shutdown } = require('wintools');
 class PowerControlExtension extends Extension {
 	constructor() {
 		super();
-		this.name = 'Power Option';
+		this.name = 'HypeRate';
 		this.platforms = [PLATFORMS.WINDOWS, PLATFORMS.MAC];
 		this.inputs = [
 			{
