@@ -1,60 +1,94 @@
-const moment = require('./moment');
+const { dialog } = require('electron');
+const { Extension, log, INPUT_METHOD, PLATFORMS } = require('deckboard-kit');
+const { shutdown } = require('wintools');
 
-class DeckboardClock {
-	constructor(props) {
-		this.setValue = props.setValue;
-		this.name = 'Clock';
-		this.platforms = ['WINDOWS', 'LINUX'];
-
+class PowerControlExtension extends Extension {
+	constructor() {
+		super();
+		this.name = 'Power Option';
+		this.platforms = [PLATFORMS.WINDOWS, PLATFORMS.MAC];
 		this.inputs = [
 			{
-				label: 'Display Time',
-				value: 'clock-display-time',
-				icon: 'clock',
-				mode: 'custom-value',
-				fontIcon: 'fas',
-				color: '#1a1a1a',
+				label: 'Power Option',
+				value: 'power-option',
+				icon: 'power-off',
+				color: '#34495e',
 				input: [
 					{
-						label: 'Select Clock Format',
-						type: 'input:select',
+						label: 'Action',
+						ref: 'powerAction',
+						type: INPUT_METHOD.INPUT_SELECT,
 						items: [
-							{ value: 'clock-12h', label: '12 Hour Format' },
-							{ value: 'clock-24h', label: '24 Hour Format' }
+							{
+								label: 'Shutdown',
+								value: 'shutdown'
+							},
+							{
+								label: 'Restart',
+								value: 'restart'
+							}
 						]
+					},
+					{
+						label: 'With Confirmation',
+						ref: 'confirmation',
+						type: INPUT_METHOD.INPUT_CHECKBOX,
+						default: true
 					}
 				]
 			}
 		];
-		this.configs = [];
-		this.isFirstInit = true;
 	}
 
-	get selections() {
-		return [{
-			header: this.name
-		}, ...this.inputs];
+	execute(action, { powerAction, confirmation = true }) {
+		log.info(`${action} ${powerAction}`);
+		switch (action) {
+			case 'power-option': {
+				switch (powerAction) {
+					case 'shutdown':
+						if (confirmation)
+							dialog.showMessageBox(
+								null,
+								{
+									type: 'question',
+									buttons: ['Cancel', 'Yes'],
+									defaultId: 0,
+									title: 'Shutdown',
+									message:
+										'Do you want to shutdown the computer?'
+								},
+								response => {
+									if (response === 1) shutdown.poweroff();
+								}
+							);
+						else shutdown.poweroff();
+						break;
+					case 'restart':
+						if (confirmation)
+							dialog.showMessageBox(
+								null,
+								{
+									type: 'question',
+									buttons: ['Cancel', 'Yes'],
+									defaultId: 0,
+									title: 'Shutdown',
+									message:
+										'Do you want to restart the computer?'
+								},
+								response => {
+									if (response === 1) shutdown.restart();
+								}
+							);
+						else shutdown.restart();
+						break;
+					default:
+						break;
+				}
+			}
+			default:
+				break;
+		}
 	}
-
-	// Executes when the extensions loaded every time the app start.
-	initExtension() {
-		this.updateClock();
-		setInterval(() => {
-			if (this.isFirstInit) this.isFirstInit = false;
-			this.updateClock()
-		}, this.isFirstInit ? 60000 - (moment().get('seconds') * 1000) : 60000);
-	}
-
-	updateClock() {
-		this.setValue({
-			'clock-12h': moment().format('h:mm A'),
-			'clock-24h': moment().format('HH:mm')
-		})
-	}
-
-	execute() {
-		return;
-	};
 }
 
-module.exports = (sendData) => new DeckboardClock(sendData);
+module.exports = new PowerControlExtension();
